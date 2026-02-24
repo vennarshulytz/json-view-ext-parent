@@ -25,7 +25,9 @@ public class FilterRuleRegistry {
 
     private static final Logger log = LoggerFactory.getLogger(FilterRuleRegistry.class);
 
-    private static final ConcurrentMap<Method, Optional<JsonViewExt>> jsonViewExtCache = new ConcurrentHashMap<>();
+    private static final Object NULL_SENTINEL = new Object();
+
+    private static final ConcurrentMap<Method, Object> jsonViewExtCache = new ConcurrentHashMap<>();
 
     /**
      * 方法级别的规则缓存
@@ -43,11 +45,10 @@ public class FilterRuleRegistry {
      * 解析 @JsonViewExt 注解
      */
     private FilterContext parseAnnotation(Method method) {
-        Optional<JsonViewExt> jsonViewExtAnnotation = getJsonViewExtAnnotation(method);
-        if (!jsonViewExtAnnotation.isPresent()) {
+        JsonViewExt annotation = getJsonViewExtAnnotation(method);
+        if (annotation == null) {
             return new FilterContext();
         }
-        JsonViewExt annotation = jsonViewExtAnnotation.get();
 
         FilterContext context = new FilterContext();
 
@@ -94,18 +95,20 @@ public class FilterRuleRegistry {
      * 判断方法是否有 @JsonViewExt 注解
      */
     public boolean hasJsonViewExtAnnotation(Method method) {
-        return getJsonViewExtAnnotation(method).isPresent();
+        Object o = jsonViewExtCache.computeIfAbsent(method, FilterRuleRegistry::findJsonViewExtAnnotation);
+        return o != NULL_SENTINEL;
     }
 
-    public static Optional<JsonViewExt> getJsonViewExtAnnotation(Method method) {
-        return jsonViewExtCache.computeIfAbsent(method, m -> Optional.ofNullable(findJsonViewExtAnnotation(m)));
+    public static JsonViewExt getJsonViewExtAnnotation(Method method) {
+        Object o = jsonViewExtCache.computeIfAbsent(method, FilterRuleRegistry::findJsonViewExtAnnotation);
+        return o == NULL_SENTINEL ? null : (JsonViewExt) o;
     }
 
 
     /**
      * 从方法、类上获取 @JsonViewExt 注解
      */
-    public static JsonViewExt findJsonViewExtAnnotation(Method method) {
+    public static Object findJsonViewExtAnnotation(Method method) {
 
         JsonViewExt jsonViewExt = method.getAnnotation(JsonViewExt.class);
         if (jsonViewExt != null) {
@@ -130,7 +133,7 @@ public class FilterRuleRegistry {
             }
         }
 
-        return null;
+        return NULL_SENTINEL;
     }
 
 }
