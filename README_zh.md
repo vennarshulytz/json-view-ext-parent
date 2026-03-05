@@ -8,6 +8,16 @@
 
 一个基于 Jackson 的 Spring Boot Starter，提供比 `@JsonView` 更灵活的 JSON 序列化字段控制能力，支持细粒度的字段过滤和敏感数据脱敏。
 
+## 🔗 项目地址
+
+- **GitHub**：[vennarshulytz/json-view-ext-parent: A Spring Boot Starter for custom JSON serialization with field filtering and sensitive data masking](https://github.com/vennarshulytz/json-view-ext-parent)
+
+---
+
+- 如果在使用过程中遇到问题，欢迎随时提交 Issue；也非常欢迎通过 PR 参与改进。 
+- 如果这个项目对你有所帮助，欢迎在 GitHub 上点个 ⭐ Star 支持一下。
+- 你的支持是开源作者持续维护和迭代项目的重要动力！
+
 ## 📖 项目介绍
 
 在 Spring Boot 项目中，Controller 层返回的数据往往需要根据不同场景进行定制化处理。传统的 `@JsonView` 注解虽然能实现视图控制，但在复杂场景下显得不够灵活。本项目提供了一套更强大的解决方案：

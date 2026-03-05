@@ -8,6 +8,16 @@
 
 A Spring Boot Starter based on Jackson that provides more flexible JSON serialization field control than `@JsonView`, supporting fine-grained field filtering and sensitive data masking.
 
+## 🔗 Project Repository
+
+- **GitHub**：[vennarshulytz/json-view-ext-parent: A Spring Boot Starter for custom JSON serialization with field filtering and sensitive data masking](https://github.com/vennarshulytz/json-view-ext-parent)
+
+---
+
+- If you encounter any issues while using this project, feel free to open an Issue. Pull Requests are always welcome and highly appreciated.
+- If you find this project helpful, please consider giving it a ⭐ Star on GitHub.
+- Your support means a lot and helps keep the project actively maintained and improved.
+
 ## 📖 Introduction
 
 In Spring Boot projects, data returned from the Controller layer often needs to be customized for different scenarios. While the traditional `@JsonView` annotation can achieve view control, it is not flexible enough for complex scenarios. This project provides a more powerful solution:
@@ -53,6 +63,8 @@ For future refactoring to VO entities, we recommend using our IDEA plugin **[Fas
 ## 🚀 Quick Start
 
 ### 1. Add Dependency
+
+Choose the appropriate starter based on your Spring Boot version:
 
 #### Spring Boot 1.x / Spring Boot 2.x（JDK 8+）
 
