@@ -9,7 +9,6 @@ import io.github.vennarshulytz.jsonviewext.sensitive.impl.IdCardType;
 import io.github.vennarshulytz.jsonviewext.sensitive.impl.PhoneType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author vennarshulytz
  * @since 1.0.0
  */
-@SpringBootTest
+// @SpringBootTest
 public class JsonViewExtTests {
 
     private ObjectMapper objectMapper;

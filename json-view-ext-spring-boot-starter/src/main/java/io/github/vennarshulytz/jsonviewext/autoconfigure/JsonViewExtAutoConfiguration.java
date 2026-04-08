@@ -1,6 +1,7 @@
 package io.github.vennarshulytz.jsonviewext.autoconfigure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.vennarshulytz.jsonviewext.config.JsonViewExtProperties;
 import io.github.vennarshulytz.jsonviewext.converter.JsonViewExtMappingJackson2HttpMessageConverter;
 import io.github.vennarshulytz.jsonviewext.core.FilterRuleRegistry;
 import io.github.vennarshulytz.jsonviewext.core.JsonViewExtModule;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.PostConstruct;
@@ -38,8 +40,11 @@ public class JsonViewExtAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public FilterRuleRegistry filterRuleRegistry() {
-        return new FilterRuleRegistry();
+    public FilterRuleRegistry filterRuleRegistry(@Nullable JsonViewExtProperties jsonViewExtProperties) {
+        if (jsonViewExtProperties == null) {
+            throw new IllegalArgumentException("jsonViewExtProperties must not be null");
+        }
+        return new FilterRuleRegistry(jsonViewExtProperties.getCacheMaximumSize());
     }
 
     @Bean

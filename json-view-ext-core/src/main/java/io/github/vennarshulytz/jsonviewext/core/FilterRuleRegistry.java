@@ -1,19 +1,20 @@
 package io.github.vennarshulytz.jsonviewext.core;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.vennarshulytz.jsonviewext.annotation.JsonFilterExt;
 import io.github.vennarshulytz.jsonviewext.annotation.JsonViewExt;
 import io.github.vennarshulytz.jsonviewext.annotation.Sensitive;
 import io.github.vennarshulytz.jsonviewext.model.FilterContext;
 import io.github.vennarshulytz.jsonviewext.model.FilterRule;
 import io.github.vennarshulytz.jsonviewext.sensitive.SensitiveType;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * 过滤规则注册中心，负责解析注解并缓存规则
@@ -27,18 +28,23 @@ public class FilterRuleRegistry {
 
     private static final Object NULL_SENTINEL = new Object();
 
-    private static final ConcurrentMap<Method, Object> jsonViewExtCache = new ConcurrentHashMap<>();
+    private final Cache<Method, Object> jsonViewExtCache;
 
     /**
      * 方法级别的规则缓存
      */
-    private static final Map<Method, FilterContext> methodRuleCache = new ConcurrentHashMap<>();
+    private final Cache<Method, FilterContext> methodRuleCache;
+
+    public FilterRuleRegistry(long cacheMaximumSize) {
+        this.jsonViewExtCache = createCache(cacheMaximumSize);
+        this.methodRuleCache = createCache(cacheMaximumSize);
+    }
 
     /**
      * 解析并缓存方法的过滤规则
      */
     public FilterContext getOrCreateContext(Method method) {
-        return methodRuleCache.computeIfAbsent(method, this::parseAnnotation);
+        return methodRuleCache.get(method, this::parseAnnotation);
     }
 
     /**
@@ -95,12 +101,12 @@ public class FilterRuleRegistry {
      * 判断方法是否有 @JsonViewExt 注解
      */
     public boolean hasJsonViewExtAnnotation(Method method) {
-        Object o = jsonViewExtCache.computeIfAbsent(method, FilterRuleRegistry::findJsonViewExtAnnotation);
+        Object o = jsonViewExtCache.get(method, FilterRuleRegistry::findJsonViewExtAnnotation);
         return o != NULL_SENTINEL;
     }
 
-    public static JsonViewExt getJsonViewExtAnnotation(Method method) {
-        Object o = jsonViewExtCache.computeIfAbsent(method, FilterRuleRegistry::findJsonViewExtAnnotation);
+    public JsonViewExt getJsonViewExtAnnotation(Method method) {
+        Object o = jsonViewExtCache.get(method, FilterRuleRegistry::findJsonViewExtAnnotation);
         return o == NULL_SENTINEL ? null : (JsonViewExt) o;
     }
 
@@ -134,6 +140,13 @@ public class FilterRuleRegistry {
         }
 
         return NULL_SENTINEL;
+    }
+
+
+    private static <K1, V1> @NonNull Cache<K1, V1> createCache(long cacheMaximumSize) {
+        return Caffeine.newBuilder()
+                .maximumSize(cacheMaximumSize)
+                .build();
     }
 
 }

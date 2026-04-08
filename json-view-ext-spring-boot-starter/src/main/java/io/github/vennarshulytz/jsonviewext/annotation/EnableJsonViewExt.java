@@ -1,7 +1,6 @@
 package io.github.vennarshulytz.jsonviewext.annotation;
 
-import io.github.vennarshulytz.jsonviewext.autoconfigure.JsonViewExtAutoConfiguration;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
+import io.github.vennarshulytz.jsonviewext.config.JsonViewExtRegistrar;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;
@@ -15,6 +14,11 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import({JacksonAutoConfiguration.class, JsonViewExtAutoConfiguration.class})
+@Import(JsonViewExtRegistrar.class)
 public @interface EnableJsonViewExt {
+
+    /**
+     * 规则缓存最大容量
+     */
+    int cacheMaximumSize() default 1024;
 }

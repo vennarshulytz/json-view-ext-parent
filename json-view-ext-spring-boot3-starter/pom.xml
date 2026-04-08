@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.github.vennarshulytz</groupId>
         <artifactId>json-view-ext-parent</artifactId>
-        <version>1.1.2</version>
+        <version>1.2.0</version>
     </parent>
 
     <artifactId>json-view-ext-spring-boot3-starter</artifactId>
@@ -54,6 +54,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <version>2.0.11</version>
             <scope>provided</scope>
         </dependency>
 
