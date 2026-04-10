@@ -8,6 +8,7 @@ import io.github.vennarshulytz.jsonviewext.annotation.Sensitive;
 import io.github.vennarshulytz.jsonviewext.model.FilterContext;
 import io.github.vennarshulytz.jsonviewext.model.FilterRule;
 import io.github.vennarshulytz.jsonviewext.sensitive.SensitiveType;
+import io.github.vennarshulytz.jsonviewext.utils.JsonViewExtUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,20 +59,24 @@ public class FilterRuleRegistry {
 
         FilterContext context = new FilterContext();
 
-        // 解析 include 规则（后定义的覆盖先定义的）
-        JsonFilterExt[] includes = annotation.include();
-        for (JsonFilterExt filter : includes) {
-            FilterRule rule = parseFilterRule(filter, true);
-            context.addIncludeRule(rule);
-            log.debug("Parsed include rule: {}", rule);
-        }
+        JsonViewExt[] resolve = JsonViewExtUtils.resolve(annotation);
 
-        // 解析 exclude 规则（后定义的覆盖先定义的）
-        JsonFilterExt[] excludes = annotation.exclude();
-        for (JsonFilterExt filter : excludes) {
-            FilterRule rule = parseFilterRule(filter, false);
-            context.addExcludeRule(rule);
-            log.debug("Parsed exclude rule: {}", rule);
+        for (JsonViewExt jsonViewExt : resolve) {
+            // 解析 include 规则（后定义的覆盖先定义的）
+            JsonFilterExt[] includes = jsonViewExt.include();
+            for (JsonFilterExt filter : includes) {
+                FilterRule rule = parseFilterRule(filter, true);
+                context.addIncludeRule(rule);
+                log.debug("Parsed include rule: {}", rule);
+            }
+
+            // 解析 exclude 规则（后定义的覆盖先定义的）
+            JsonFilterExt[] excludes = jsonViewExt.exclude();
+            for (JsonFilterExt filter : excludes) {
+                FilterRule rule = parseFilterRule(filter, false);
+                context.addExcludeRule(rule);
+                log.debug("Parsed exclude rule: {}", rule);
+            }
         }
 
         return context;

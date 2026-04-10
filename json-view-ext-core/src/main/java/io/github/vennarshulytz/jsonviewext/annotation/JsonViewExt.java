@@ -1,5 +1,7 @@
 package io.github.vennarshulytz.jsonviewext.annotation;
 
+import io.github.vennarshulytz.jsonviewext.template.JsonViewExtTemplate;
+
 import java.lang.annotation.*;
 
 /**
@@ -13,6 +15,12 @@ import java.lang.annotation.*;
 @Documented
 @Inherited
 public @interface JsonViewExt {
+
+    /**
+     * JsonViewExt 模板类，用于定义一组预设的字段过滤规则
+     */
+    Class<? extends JsonViewExtTemplate> template() default JsonViewExtTemplate.class;
+
 
     /**
      * 包含的字段过滤规则，指定要序列化的字段
