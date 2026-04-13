@@ -97,10 +97,12 @@ public class JsonViewExtUtils {
 
         JsonViewExt[] result = new JsonViewExt[totalLength];
 
-        int length = totalLength - 1;
-        for (int i = length; i >= 0; i--) {
+        int index = 0;
+        int i = totalLength - 1;
+        for (; i >= 0; i--) {
             JsonViewExt rule = collectedRules.get(i);
-            result[length - i] = rule;
+            result[index] = rule;
+            index++;
         }
         return result;
     }
