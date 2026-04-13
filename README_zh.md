@@ -569,6 +569,168 @@ public class BankCardType implements SensitiveType {
 
 ---
 
+### 字段过滤规则模板（Filter Rule Template）
+
+#### 功能介绍
+
+在实际开发中，往往存在多个接口需要复用相同字段过滤规则的场景。若通过复制粘贴的方式在每个方法上重复声明 `@JsonViewExt`，会带来以下问题：
+
+- **代码冗余**：相同的过滤规则在多处重复出现
+- **可读性降低**：注解内容过长，掩盖方法本身的业务含义
+- **可维护性降低**：一旦规则需要修改，需要逐处查找并同步更新，容易遗漏
+
+为此，框架提供了**字段过滤规则模板**功能，支持将公共的字段过滤规则抽取为模板，在需要的地方直接引用，实现规则的集中管理与复用。
+
+------
+
+#### 未使用模板时（原始写法）
+
+```java
+@GetMapping("/findById")
+@JsonViewExt(
+    include = {
+        @JsonFilterExt(clazz = Department.class, props = {"manager1", "managerList1"}),
+        @JsonFilterExt(
+            clazz = Employee.class,
+            field = "managerList1",
+            props = {"name", "number", "address1"},
+            sensitives = {@Sensitive(type = IdCardType.class, props = {"number"})}
+        ),
+        @JsonFilterExt(clazz = Employee.class, props = {"number", "address1", "addressList1"}),
+        @JsonFilterExt(clazz = Address.class, field = "managerList1.address1", props = {"id", "province"})
+    },
+    exclude = {
+        @JsonFilterExt(clazz = Address.class, props = {"id"})
+    }
+)
+public Department findById(@RequestParam("id") String id) {
+    return departmentService.findById(id);
+}
+```
+
+当多个接口需要相同规则时，上述注解必须重复书写，维护成本极高。
+
+------
+
+#### 方案一：自定义模板注解
+
+通过创建一个**自定义注解**，在其上标注 `@JsonViewExt`，将字段过滤规则封装在该注解中。使用时，直接将自定义模板注解标注在目标方法上即可。
+
+##### 第一步：定义模板注解
+
+```java
+@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@JsonViewExt(
+    include = {
+        @JsonFilterExt(clazz = Department.class, props = {"manager1", "managerList1"}),
+        @JsonFilterExt(
+            clazz = Employee.class,
+            field = "managerList1",
+            props = {"name", "number", "address1"},
+            sensitives = {@Sensitive(type = IdCardType.class, props = {"number"})}
+        ),
+        @JsonFilterExt(clazz = Employee.class, props = {"number", "address1", "addressList1"}),
+        @JsonFilterExt(clazz = Address.class, field = "managerList1.address1", props = {"id", "province"})
+    },
+    exclude = {
+        @JsonFilterExt(clazz = Address.class, props = {"id"})
+    }
+)
+public @interface TemplateA {
+
+}
+```
+
+##### 第二步：在接口方法上使用模板注解
+
+```java
+@GetMapping("/findById")
+@TemplateA
+public Department findById(@RequestParam("id") String id) {
+    return departmentService.findById(id);
+}
+
+@GetMapping("/findByName")
+@TemplateA
+public Department findByName(@RequestParam("name") String name) {
+    return departmentService.findByName(name);
+}
+```
+
+> **优点**：使用方式简洁直观，与 Spring 原生组合注解风格保持一致，语义清晰。
+
+------
+
+#### 方案二：自定义模板类
+
+通过创建一个**普通接口（interface）**，在其上标注 `@JsonViewExt`，将字段过滤规则封装在该接口中。使用时，通过 `@JsonViewExt(template = TemplateA.class)` 的方式引用模板类。
+
+##### 第一步：定义模板类
+
+```java
+@JsonViewExt(
+    include = {
+        @JsonFilterExt(clazz = Department.class, props = {"manager1", "managerList1"}),
+        @JsonFilterExt(
+            clazz = Employee.class,
+            field = "managerList1",
+            props = {"name", "number", "address1"},
+            sensitives = {@Sensitive(type = IdCardType.class, props = {"number"})}
+        ),
+        @JsonFilterExt(clazz = Employee.class, props = {"number", "address1", "addressList1"}),
+        @JsonFilterExt(clazz = Address.class, field = "managerList1.address1", props = {"id", "province"})
+    },
+    exclude = {
+        @JsonFilterExt(clazz = Address.class, props = {"id"})
+    }
+)
+public interface TemplateA extends JsonViewExtTemplate {
+
+}
+```
+
+##### 第二步：在接口方法上引用模板类
+
+```java
+@GetMapping("/findById")
+@JsonViewExt(template = TemplateA.class)
+public Department findById(@RequestParam("id") String id) {
+    return departmentService.findById(id);
+}
+
+@GetMapping("/findByName")
+@JsonViewExt(template = TemplateA.class)
+public Department findByName(@RequestParam("name") String name) {
+    return departmentService.findByName(name);
+}
+```
+
+> **优点**：模板以普通 Java 接口的形式存在，便于统一归类管理，可集中存放在专门的模板包（如 `template` 包）中，结构更清晰。
+
+------
+
+#### 三种写法等价说明
+
+以下三种写法在功能上**完全等价**，开发者可根据团队规范和个人偏好自由选择：
+
+| 写法                              | 说明                                         |
+| --------------------------------- | -------------------------------------------- |
+| 直接使用 `@JsonViewExt`           | 原始写法，适合规则仅使用一次的场景           |
+| 方案一：自定义模板注解            | 适合偏好注解组合风格的团队，语义直观         |
+| 方案二：自定义模板类（interface） | 适合需要集中管理大量模板规则的项目，结构清晰 |
+
+------
+
+#### 最佳实践建议
+
+- 建议将模板注解或模板类统一放置在独立的包中（如 `com.example.template`），便于查找和维护。
+- 模板命名应具有业务含义，清晰表达该过滤规则的适用场景（如 `DepartmentDetailTemplate`、`EmployeeBriefTemplate` 等）。
+- 当过滤规则发生变更时，只需修改模板定义，所有引用该模板的接口将自动生效，无需逐一修改。
+
+---
+
 ## 📋 规则说明
 
 | 规则 | 说明 |

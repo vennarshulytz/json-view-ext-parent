@@ -569,6 +569,168 @@ Using custom masking processor:
 
 ---
 
+### Filter Rule Template
+
+#### Introduction
+
+In real-world development, it is common for multiple API endpoints to share the same field filtering rules. Repeating the full `@JsonViewExt` declaration on every method via copy-paste leads to the following issues:
+
+- **Code redundancy**: The same filtering rules appear in multiple places
+- **Reduced readability**: Lengthy annotations obscure the business logic of the method itself
+- **Reduced maintainability**: Any change to the rules requires finding and updating every occurrence, making it error-prone
+
+To address this, the framework introduces the **Filter Rule Template** feature, which allows you to extract common field filtering rules into a reusable template and reference it wherever needed, enabling centralized management and reuse.
+
+------
+
+#### Without Template (Original Approach)
+
+```java
+@GetMapping("/findById")
+@JsonViewExt(
+    include = {
+        @JsonFilterExt(clazz = Department.class, props = {"manager1", "managerList1"}),
+        @JsonFilterExt(
+            clazz = Employee.class,
+            field = "managerList1",
+            props = {"name", "number", "address1"},
+            sensitives = {@Sensitive(type = IdCardType.class, props = {"number"})}
+        ),
+        @JsonFilterExt(clazz = Employee.class, props = {"number", "address1", "addressList1"}),
+        @JsonFilterExt(clazz = Address.class, field = "managerList1.address1", props = {"id", "province"})
+    },
+    exclude = {
+        @JsonFilterExt(clazz = Address.class, props = {"id"})
+    }
+)
+public Department findById(@RequestParam("id") String id) {
+    return departmentService.findById(id);
+}
+```
+
+When multiple endpoints require the same rules, the annotation block above must be repeated, resulting in high maintenance costs.
+
+------
+
+#### Option 1: Custom Template Annotation
+
+Create a **custom annotation** and annotate it with `@JsonViewExt` to encapsulate the field filtering rules. Simply apply the custom template annotation to the target method when needed.
+
+##### Step 1: Define the Template Annotation
+
+```java
+@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@JsonViewExt(
+    include = {
+        @JsonFilterExt(clazz = Department.class, props = {"manager1", "managerList1"}),
+        @JsonFilterExt(
+            clazz = Employee.class,
+            field = "managerList1",
+            props = {"name", "number", "address1"},
+            sensitives = {@Sensitive(type = IdCardType.class, props = {"number"})}
+        ),
+        @JsonFilterExt(clazz = Employee.class, props = {"number", "address1", "addressList1"}),
+        @JsonFilterExt(clazz = Address.class, field = "managerList1.address1", props = {"id", "province"})
+    },
+    exclude = {
+        @JsonFilterExt(clazz = Address.class, props = {"id"})
+    }
+)
+public @interface TemplateA {
+
+}
+```
+
+##### Step 2: Apply the Template Annotation to Methods
+
+```java
+@GetMapping("/findById")
+@TemplateA
+public Department findById(@RequestParam("id") String id) {
+    return departmentService.findById(id);
+}
+
+@GetMapping("/findByName")
+@TemplateA
+public Department findByName(@RequestParam("name") String name) {
+    return departmentService.findByName(name);
+}
+```
+
+> **Advantage**: Clean and intuitive usage, consistent with Spring's native composed annotation style, with clear semantic meaning.
+
+------
+
+#### Option 2: Custom Template Class
+
+Create a **plain Java interface** and annotate it with `@JsonViewExt` to encapsulate the field filtering rules. Reference the template via `@JsonViewExt(template = TemplateA.class)` on the target method.
+
+##### Step 1: Define the Template Class
+
+```java
+@JsonViewExt(
+    include = {
+        @JsonFilterExt(clazz = Department.class, props = {"manager1", "managerList1"}),
+        @JsonFilterExt(
+            clazz = Employee.class,
+            field = "managerList1",
+            props = {"name", "number", "address1"},
+            sensitives = {@Sensitive(type = IdCardType.class, props = {"number"})}
+        ),
+        @JsonFilterExt(clazz = Employee.class, props = {"number", "address1", "addressList1"}),
+        @JsonFilterExt(clazz = Address.class, field = "managerList1.address1", props = {"id", "province"})
+    },
+    exclude = {
+        @JsonFilterExt(clazz = Address.class, props = {"id"})
+    }
+)
+public interface TemplateA extends JsonViewExtTemplate {
+
+}
+```
+
+##### Step 2: Reference the Template Class on Methods
+
+```java
+@GetMapping("/findById")
+@JsonViewExt(template = TemplateA.class)
+public Department findById(@RequestParam("id") String id) {
+    return departmentService.findById(id);
+}
+
+@GetMapping("/findByName")
+@JsonViewExt(template = TemplateA.class)
+public Department findByName(@RequestParam("name") String name) {
+    return departmentService.findByName(name);
+}
+```
+
+> **Advantage**: Templates exist as plain Java interfaces, making them easy to organize and manage — for example, by grouping them in a dedicated `template` package for a cleaner project structure.
+
+------
+
+#### Equivalence of All Three Approaches
+
+The following three approaches are **functionally equivalent**. Developers may choose based on team conventions or personal preference:
+
+| Approach                                    | Description                                                  |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| Direct `@JsonViewExt` usage                 | Original approach; suitable when the rule is used only once  |
+| Option 1: Custom template annotation        | Suitable for teams that prefer a composed annotation style; intuitive semantics |
+| Option 2: Custom template class (interface) | Suitable for projects requiring centralized management of a large number of template rules; cleaner structure |
+
+------
+
+#### Best Practices
+
+- It is recommended to place all template annotations or template classes in a dedicated package (e.g., `com.example.template`) for easy discovery and maintenance.
+- Use business-meaningful names for templates that clearly describe the applicable scenario (e.g., `DepartmentDetailTemplate`, `EmployeeBriefTemplate`).
+- When filtering rules need to be updated, simply modify the template definition — all endpoints referencing that template will automatically reflect the change, with no need to update each one individually.
+
+---
+
 ## 📋 Rule Reference
 
 | Rule | Description |
