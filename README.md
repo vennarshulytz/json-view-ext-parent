@@ -665,7 +665,7 @@ public Department findByName(@RequestParam("name") String name) {
 
 #### Option 2: Custom Template Class
 
-Create a **plain Java interface** and annotate it with `@JsonViewExt` to encapsulate the field filtering rules. Reference the template via `@JsonViewExt(template = TemplateA.class)` on the target method.
+Create a **template class or template interface that extends or implements the `JsonViewExtTemplate` interface** and annotate it with `@JsonViewExt` to encapsulate the field filtering rules. Reference the template via `@JsonViewExt(template = TemplateA.class)` on the target method.
 
 ##### Step 1: Define the Template Class
 

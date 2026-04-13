@@ -665,7 +665,7 @@ public Department findByName(@RequestParam("name") String name) {
 
 #### 方案二：自定义模板类
 
-通过创建一个**普通接口（interface）**，在其上标注 `@JsonViewExt`，将字段过滤规则封装在该接口中。使用时，通过 `@JsonViewExt(template = TemplateA.class)` 的方式引用模板类。
+通过创建一个**继承或者实现 `JsonViewExtTemplate` 接口的模板类或者模板接口**，在其上标注 `@JsonViewExt`，将字段过滤规则封装在其中。使用时，通过 `@JsonViewExt(template = TemplateA.class)` 的方式引用模板类。
 
 ##### 第一步：定义模板类
 
