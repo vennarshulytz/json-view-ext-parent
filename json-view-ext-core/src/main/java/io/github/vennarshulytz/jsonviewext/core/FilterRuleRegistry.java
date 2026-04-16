@@ -54,14 +54,17 @@ public class FilterRuleRegistry {
     private FilterContext parseAnnotation(Method method) {
         JsonViewExt annotation = getJsonViewExtAnnotation(method);
         if (annotation == null) {
-            return new FilterContext();
+            return FilterContext.EMPTY;
         }
 
         FilterContext context = new FilterContext();
 
-        JsonViewExt[] resolve = JsonViewExtUtils.resolve(annotation);
+        List<JsonViewExt> resolve = JsonViewExtUtils.resolve(annotation);
+        int size = resolve.size();
+        for (int i = size - 1; i >= 0; i--) {
 
-        for (JsonViewExt jsonViewExt : resolve) {
+            JsonViewExt jsonViewExt = resolve.get(i);
+
             // 解析 include 规则（后定义的覆盖先定义的）
             JsonFilterExt[] includes = jsonViewExt.include();
             for (JsonFilterExt filter : includes) {

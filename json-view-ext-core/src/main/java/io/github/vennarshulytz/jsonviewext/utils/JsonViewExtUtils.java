@@ -3,10 +3,8 @@ package io.github.vennarshulytz.jsonviewext.utils;
 import io.github.vennarshulytz.jsonviewext.annotation.JsonViewExt;
 import io.github.vennarshulytz.jsonviewext.template.JsonViewExtTemplate;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.lang.annotation.Annotation;
+import java.util.*;
 
 /**
  * JsonViewExt 注解解析工具类
@@ -17,14 +15,14 @@ import java.util.Set;
 public class JsonViewExtUtils {
 
     /**
-     * 解析 JsonViewExt 注解，收集所有 JsonViewExt 数组
+     * 解析 JsonViewExt 注解，收集所有 JsonViewExt 集合
      *
      * @param jsonViewExt 目标 JsonViewExt 注解
-     * @return 收集到的 JsonViewExt 数组
+     * @return 收集到的 JsonViewExt 集合
      */
-    public static JsonViewExt[] resolve(JsonViewExt jsonViewExt) {
+    public static List<JsonViewExt> resolve(JsonViewExt jsonViewExt) {
         if (jsonViewExt == null) {
-            return new JsonViewExt[0];
+            return Collections.emptyList();
         }
 
         List<JsonViewExt> collectedRules = new ArrayList<>();
@@ -33,8 +31,7 @@ public class JsonViewExtUtils {
 
         doResolve(jsonViewExt, collectedRules, visitedTemplates);
 
-        // 按顺序合并所有 ValidationRule 数组
-        return mergeRules(collectedRules);
+        return collectedRules;
     }
 
     /**
@@ -79,32 +76,20 @@ public class JsonViewExtUtils {
 
         // template Class 上没有标记 JsonViewExt，终止递归
         if (templateAnnotation == null) {
-            return;
+            for (Annotation annotation : templateClass.getAnnotations()) {
+                templateAnnotation = annotation.annotationType().getAnnotation(JsonViewExt.class);
+                if (templateAnnotation != null) {
+                    break;
+                }
+            }
+
+            if (templateAnnotation == null) {
+                return;
+            }
         }
 
         // 递归处理 template Class 上的 JsonViewExt
         doResolve(templateAnnotation, collectedRules, visitedTemplates);
-    }
-
-    /**
-     * 合并 JsonViewExt 集合为 JsonViewExt 数组
-     *
-     * @param collectedRules 按顺序收集的 JsonViewExt 集合列表
-     * @return 合并后的 JsonViewExt 数组
-     */
-    private static JsonViewExt[] mergeRules(List<JsonViewExt> collectedRules) {
-        int totalLength = collectedRules.size();
-
-        JsonViewExt[] result = new JsonViewExt[totalLength];
-
-        int index = 0;
-        int i = totalLength - 1;
-        for (; i >= 0; i--) {
-            JsonViewExt rule = collectedRules.get(i);
-            result[index] = rule;
-            index++;
-        }
-        return result;
     }
 
     /**

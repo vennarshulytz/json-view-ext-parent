@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FilterContext {
 
+    public static final FilterContext EMPTY = new FilterContext();
+
     /**
      * 包含规则映射: Class -> (fieldPath -> FilterRule)
      */
